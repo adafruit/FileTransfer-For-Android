@@ -101,7 +101,7 @@ object BleManager {
 
     @SuppressLint("InlinedApi")
     @RequiresPermission(value = BLUETOOTH_CONNECT)
-    fun getPairedPeripherals(context: Context): Set<BluetoothDevice>? {
+    fun getBondedPeripherals(context: Context): Set<BluetoothDevice>? {
         return getBluetoothAdapter(context)?.bondedDevices
     }
 
@@ -163,7 +163,8 @@ object BleManager {
             try {
                 val device = adapter.getRemoteDevice(address)
                 val blePeripheral = BlePeripheral(device)
-                val bleFileTransferPeripheral = BleFileTransferPeripheral(blePeripheral, onBonded = onBonded)
+                val bleFileTransferPeripheral =
+                    BleFileTransferPeripheral(blePeripheral, onBonded = onBonded)
                 log.info("Try to connect to known peripheral: ${blePeripheral.nameOrAddress}")
                 bleFileTransferPeripheral.connectAndSetup(
                     externalScope = externalScope,
@@ -197,26 +198,41 @@ object BleManager {
     // endregion
 
     // region Bonding
-    fun removeAllPairedPeripheralInfo(context: Context) {
+    fun getBondedDevices(context: Context): List<BluetoothDevice> {
+        return try {
+            val bondedDevices = BleManager.getBluetoothAdapter(context)?.bondedDevices
+            bondedDevices?.toList() ?: emptyList()
+        } catch (e: SecurityException) {
+            log.warning("getBondedDevices security exception: $e")
+            emptyList()
+        }
+    }
+
+    fun removeAllBondedPeripheralInfo(context: Context) {
         try {
-            val bondedDevices = getPairedPeripherals(context)
+            val bondedDevices = getBondedPeripherals(context)
             log.info("Bonded devices: $bondedDevices")
 
             bondedDevices?.forEach { device ->
-                try {
-                    val method = device.javaClass.getMethod("removeBond")
-                    val result = method.invoke(device) as Boolean
-                    if (result) {
-                        log.info("Successfully removed bond")
-                    }
-                } catch (e: Exception) {
-                    log.info("ERROR: could not remove bond: $e")
-                }
+                removeBondedPeripheralInfo(device)
 
             }
         } catch (ignored: SecurityException) {
         }
     }
+
+    fun removeBondedPeripheralInfo(device: BluetoothDevice) {
+        try {
+            val method = device.javaClass.getMethod("removeBond")
+            val result = method.invoke(device) as Boolean
+            if (result) {
+                log.info("Successfully removed bond: ${device.address}")
+            }
+        } catch (e: Exception) {
+            log.warning("ERROR: could not remove bond for ${device.address}: $e")
+        }
+    }
+
 
     // endregion
 }

@@ -90,8 +90,8 @@ class BlePeripheral(
     var mtuSize: Int = kDefaultMtuSize; private set
 
     // Data - Private - Bonding
-    var bleBondDataSource: BleBondStateDataSource? = null
-    var bondStateJob: Job? = null
+    private var bleBondDataSource: BleBondStateDataSource? = null
+    private var bondStateJob: Job? = null
 
     // Data - Private - Cached values to speed up processing
     private var cachedNameNeedsUpdate = true

@@ -128,6 +128,8 @@ class Scanner(
 
     fun stopScan() {
         // Clean
+        _scanningState.update { ScanningState.Idle }
+
         scanningStateWifiJob?.cancel()
         scanningStateWifiJob = null
         scanningStateBleJob?.cancel()

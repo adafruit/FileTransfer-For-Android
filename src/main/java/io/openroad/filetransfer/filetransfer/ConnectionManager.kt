@@ -134,7 +134,7 @@ class ConnectionManager(
     ) {
         // Filter-out addresses that are not bonded
         val pairedAddresses: Set<String> =
-            BleManager.getPairedPeripherals(context)?.map { it.address }?.toSet() ?: emptySet()
+            BleManager.getBondedPeripherals(context)?.map { it.address }?.toSet() ?: emptySet()
         val addresses = knownAddresses.intersect(pairedAddresses)
 
         if (addresses.isNotEmpty()) {
