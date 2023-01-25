@@ -95,6 +95,12 @@ object BleManager {
 
     @SuppressLint("InlinedApi")
     @RequiresPermission(value = BLUETOOTH_CONNECT)
+    fun getConnectionState(context: Context, device: BluetoothDevice): Int? {
+        return getBluetoothManager(context)?.getConnectionState(device, BluetoothProfile.GATT)
+    }
+
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(value = BLUETOOTH_CONNECT)
     fun getConnectedPeripherals(context: Context): List<BluetoothDevice>? {
         return getBluetoothManager(context)?.getConnectedDevices(BluetoothProfile.GATT)
     }

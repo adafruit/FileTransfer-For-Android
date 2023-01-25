@@ -55,7 +55,13 @@ class ConnectionManager(
     private var _isReconnectingToBondedPeripherals = MutableStateFlow(false)
     private var _peripherals = MutableStateFlow<List<Peripheral>>(emptyList())
     private var peripheralsUpdateJob: Job? = null
-    private var managedBlePeripherals: MutableList<BleFileTransferPeripheral> = mutableListOf()
+
+    private data class ManagedPeripheralData(
+        val fileTransferPeripheral: BleFileTransferPeripheral,
+        val job: Job
+    )
+
+    private var managedBlePeripherals: MutableList<ManagedPeripheralData> = mutableListOf()
     private var _peripheralAddressesBeingSetup = MutableStateFlow<List<String>>(emptyList())
     private val _connectionLastException = MutableStateFlow<Exception?>(null)
 
@@ -67,6 +73,7 @@ class ConnectionManager(
 
     // Data - Public
     var scanningState = scanner.scanningState
+
     //var isScanning = scanner.isScanning
     val bleScanningLastException = blePeripheralScanner.bleLastException
     val wifiScanningLastException = wifiPeripheralScanner.wifiLastException
@@ -156,7 +163,8 @@ class ConnectionManager(
                 }
 
                 if (readyFileTransferPeripherals.isNotEmpty()) {
-                    val firstConnectedBleFileTransferPeripheral = readyFileTransferPeripherals.first()
+                    val firstConnectedBleFileTransferPeripheral =
+                        readyFileTransferPeripherals.first()
                     log.info("Reconnected to ${firstConnectedBleFileTransferPeripheral.nameOrAddress}")
 
                     readyFileTransferPeripherals.forEach { bleFileTransferPeripheral ->
@@ -183,8 +191,12 @@ class ConnectionManager(
     private fun connect(peripheral: Peripheral, completion: (Result<FileTransferClient>) -> Unit) {
         var fileTransferPeripheral: FileTransferPeripheral? = null
         when (peripheral) {
-            is WifiPeripheral -> fileTransferPeripheral = WifiFileTransferPeripheral(peripheral, onGetPasswordForHostName = onWifiPeripheralGetPasswordForHostName)
-            is BlePeripheral -> fileTransferPeripheral = BleFileTransferPeripheral(peripheral, onBonded = onBlePeripheralBonded)
+            is WifiPeripheral -> fileTransferPeripheral = WifiFileTransferPeripheral(
+                peripheral,
+                onGetPasswordForHostName = onWifiPeripheralGetPasswordForHostName
+            )
+            is BlePeripheral -> fileTransferPeripheral =
+                BleFileTransferPeripheral(peripheral, onBonded = onBlePeripheralBonded)
         }
 
         if (fileTransferPeripheral == null) {
@@ -220,7 +232,8 @@ class ConnectionManager(
             result.fold(
                 onSuccess = {
                     val fileTransferClient = FileTransferClient(fileTransferPeripheral)
-                    fileTransferClients[fileTransferPeripheral.peripheral.address] = fileTransferClient
+                    fileTransferClients[fileTransferPeripheral.peripheral.address] =
+                        fileTransferClient
 
                     updateSelectedPeripheral()
 
@@ -240,7 +253,7 @@ class ConnectionManager(
     }
 
     fun clearConnectionLastException() {
-       _connectionLastException.update { null }
+        _connectionLastException.update { null }
     }
 
     fun clearWifiLastException() {
@@ -251,18 +264,28 @@ class ConnectionManager(
         blePeripheralScanner.clearBleLastException()
     }
 
-    fun disconnectFileTransferClient(address: String) {
+    fun disconnectFileTransferClient(address: String, cause: CancellationException? = null) {
+        // Remove from managed connections
+        removePeripheralFromAutomaticallyManagedConnection(address, cause)
+
         // Disconnect if exists
         fileTransferClients[address]?.peripheral?.disconnect(null)
+
+        // Update selected peripheral
+        fileTransferClients.remove(address)
+        if (currentFileTransferClient.value?.peripheral?.address == address) {
+            userSelectedTransferClient = null
+            updateSelectedPeripheral()
+        }
     }
 
     fun updateWifiPeripheralPassword(address: String, newPassword: String): Boolean {
-        val wifiFileTransferPeripheral = fileTransferClients[address]?.fileTransferPeripheral as? WifiFileTransferPeripheral
+        val wifiFileTransferPeripheral =
+            fileTransferClients[address]?.fileTransferPeripheral as? WifiFileTransferPeripheral
         if (wifiFileTransferPeripheral != null) {
             wifiFileTransferPeripheral.password = newPassword
             return true         // Successfully changed
-        }
-        else {
+        } else {
             return false        // The peripheral is not in connectionManager
         }
     }
@@ -284,14 +307,12 @@ class ConnectionManager(
         fileTransferPeripheral: BleFileTransferPeripheral
     ) {
         // Check that doesn't already exists
-        if (managedBlePeripherals.firstOrNull { it.address == fileTransferPeripheral.address } != null) {
+        if (managedBlePeripherals.firstOrNull { it.fileTransferPeripheral.address == fileTransferPeripheral.address } != null) {
             log.info("trying to add an already managed peripheral: ${fileTransferPeripheral.nameOrAddress}")
             return
         }
 
-        managedBlePeripherals.add(fileTransferPeripheral)
-
-        externalScope.launch {
+        val managedPeripheralJob = externalScope.launch {
             fileTransferPeripheral.fileTransferState.collect { fileTransferState ->
                 when (fileTransferState) {
 
@@ -336,7 +357,12 @@ class ConnectionManager(
                                     externalScope = externalScope,
                                     addresses = setOf(fileTransferPeripheral.address),
                                     connectionTimeout = reconnectTimeout,
-                                    onBonded = { name, address -> onBlePeripheralBonded?.invoke(name, address) },
+                                    onBonded = { name, address ->
+                                        onBlePeripheralBonded?.invoke(
+                                            name,
+                                            address
+                                        )
+                                    },
                                 ) { reconnectedPeripherals ->
 
                                     if (reconnectedPeripherals.isEmpty()) {
@@ -363,7 +389,12 @@ class ConnectionManager(
                                 externalScope = externalScope,
                                 addresses = setOf(fileTransferPeripheral.address),
                                 connectionTimeout = reconnectTimeout,
-                                onBonded = { name, address -> onBlePeripheralBonded?.invoke(name, address) },
+                                onBonded = { name, address ->
+                                    onBlePeripheralBonded?.invoke(
+                                        name,
+                                        address
+                                    )
+                                },
                             ) { reconnectedPeripherals ->
 
                                 reconnectedPeripherals.forEach {
@@ -384,6 +415,13 @@ class ConnectionManager(
                 }
             }
         }
+
+        managedBlePeripherals.add(
+            ManagedPeripheralData(
+                fileTransferPeripheral,
+                managedPeripheralJob
+            )
+        )
     }
 
     private fun setReconnectionFailed(address: String) {
@@ -395,19 +433,20 @@ class ConnectionManager(
     }
 
     fun clean() {
-        managedBlePeripherals.map { removePeripheralFromAutomaticallyManagedConnection(it) }
+        managedBlePeripherals.map { removePeripheralFromAutomaticallyManagedConnection(it.fileTransferPeripheral) }
     }
 
-    private fun removePeripheralFromAutomaticallyManagedConnection(address: String) {
-        managedBlePeripherals.firstOrNull { it.address == address }?.let {
-            removePeripheralFromAutomaticallyManagedConnection(it)
-        }
+    private fun removePeripheralFromAutomaticallyManagedConnection(bleFileTransferPeripheral: BleFileTransferPeripheral, cause: CancellationException? = null) {
+        removePeripheralFromAutomaticallyManagedConnection(bleFileTransferPeripheral.address, cause)
     }
 
-    private fun removePeripheralFromAutomaticallyManagedConnection(bleFileTransferPeripheral: BleFileTransferPeripheral) {
-        managedBlePeripherals.remove(bleFileTransferPeripheral)
+    private fun removePeripheralFromAutomaticallyManagedConnection(address: String, cause: CancellationException? = null) {
+        managedBlePeripherals.forEach { if (it.fileTransferPeripheral.address == address) {
+            it.job.cancel(cause)
+        } }
+        managedBlePeripherals.removeAll { it.fileTransferPeripheral.address == address }
     }
 
-// endregion
+    // endregion
 }
 

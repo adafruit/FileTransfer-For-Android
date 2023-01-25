@@ -1,6 +1,5 @@
 package io.openroad.filetransfer.filetransfer
 
-import androidx.lifecycle.viewModelScope
 import com.adafruit.glider.utils.LogUtils
 import io.openroad.filetransfer.Peripheral
 import io.openroad.filetransfer.ble.peripheral.BlePeripheral
