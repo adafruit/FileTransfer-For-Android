@@ -24,7 +24,7 @@ class Scanner(
     sealed class ScanningState {
         object Idle : ScanningState()
         data class Scanning(val peripherals: List<Peripheral>) : ScanningState()
-        data class ScanningError(val cause: Throwable) : ScanningState()
+        //data class ScanningError(val cause: Throwable) : ScanningState()
     }
 
     // Data - Private
@@ -53,10 +53,11 @@ class Scanner(
         if (_scanningState.value is ScanningState.Scanning) return
 
         // Clean
+        log.info("Scanner startScan()")
         _scanningState.update { ScanningState.Scanning(emptyList()) }
 
         // Start Wifi Scan
-        if (isWifiScanEnabled) {
+        if (isWifiScanEnabled && scanningStateWifiJob == null) {
             scanningStateWifiJob =
                 wifiPeripheralScanner.wifiPeripheralsFlow
                     .onStart { log.info("wifiPeripheralsFlow start") }
@@ -66,11 +67,12 @@ class Scanner(
                     }.onCompletion { exception ->
                         val cause = exception?.cause
                         log.info("wifiPeripheralsFlow completion: $cause")
+                        scanningStateWifiJob = null
                     }.flowOn(defaultDispatcher).launchIn(externalScope)
         }
 
         // Start Bluetooth Scan
-        if (isBleScanEnabled) {
+        if (isBleScanEnabled && scanningStateBleJob == null) {
             scanningStateBleJob =
                 blePeripheralScanner.blePeripheralsFlow
                     .onStart { log.info("blePeripheralsFlow start") }
@@ -98,22 +100,9 @@ class Scanner(
                     }.onCompletion { exception ->
                         val cause = exception?.cause
                         log.info("blePeripheralsFlow completion: $cause")
+                        scanningStateBleJob = null
                     }.flowOn(defaultDispatcher).launchIn(externalScope)
         }
-
-/*
-        // Listen to scanning errors and map it to the UI state
-        scanningExceptionDetectorJob = externalScope.launch {
-            wifiPeripheralScanner.wifiLastException
-                .filterNotNull()
-                .collect { wifiException ->
-                    _scanningState.update {
-                        ScanningState.ScanningError(wifiException)
-                    }
-                    stopScan()
-                }
-        }
-*/
     }
 
     /*
