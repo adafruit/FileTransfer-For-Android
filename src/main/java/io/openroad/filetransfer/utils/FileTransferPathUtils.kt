@@ -7,9 +7,6 @@ package io.openroad.filetransfer.utils
 private const val fileTransferPathUtilsSeparatorCharacter = '/'
 private const val fileTransferPathUtilsSeparator = "$fileTransferPathUtilsSeparatorCharacter"
 
-class FileTransferPathUtils {
-}
-
 // region Path management
 
 fun pathRemovingFilename(path: String): String  {
@@ -26,14 +23,12 @@ fun upPath(from: String): String {
     val filenamePath: String
     if (from.last() == fileTransferPathUtilsSeparatorCharacter) {
         filenamePath = from.dropLast(1)
-    }
-    else {
+    } else {
         filenamePath = from
     }
 
     // Remove any filename
-    val pathWithoutFilename = pathRemovingFilename(filenamePath)
-    return pathWithoutFilename
+    return pathRemovingFilename(filenamePath)
 }
 
 // endregion
