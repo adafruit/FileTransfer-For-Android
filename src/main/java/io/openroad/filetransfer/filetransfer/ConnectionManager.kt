@@ -31,13 +31,6 @@ class ConnectionManager(
     private val externalScope: CoroutineScope = MainScope(),
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
-    /*
-    sealed class ConnectionState {
-        object Idle : ConnectionState()
-        data class Scanning(val peripherals: List<Peripheral>) : ConnectionState()
-        data class ConnectionError(val cause: Throwable) : ConnectionState()
-    }*/
-
     // Data - Private
     private val log by LogUtils()
 
@@ -94,18 +87,18 @@ class ConnectionManager(
 
         scanner.startScan()
 
-        peripheralsUpdateJob = scanningState
-            .onEach { state ->
-                _peripherals.update {
+        if (peripheralsUpdateJob == null) {
+            peripheralsUpdateJob = scanningState
+                .onEach { state ->
                     if (state is Scanner.ScanningState.Scanning) {
-                        state.peripherals
-                    } else {
-                        emptyList()
+                        _peripherals.update {
+                            state.peripherals
+                        }
                     }
                 }
-            }
-            .flowOn(defaultDispatcher)
-            .launchIn(externalScope)
+                .flowOn(defaultDispatcher)
+                .launchIn(externalScope)
+        }
     }
 
     fun stopScan() {
@@ -120,15 +113,20 @@ class ConnectionManager(
 
     @SuppressLint("InlinedApi")
     @RequiresPermission(allOf = [BLUETOOTH_SCAN, BLUETOOTH_CONNECT])
-    fun setSelectedPeripheral(peripheral: Peripheral) {
-        fileTransferClients[peripheral.address]?.let {
-            userSelectedTransferClient = it
+    fun setSelectedPeripheral(
+        peripheral: Peripheral,
+        completion: ((Result<FileTransferClient>) -> Unit)? = null
+    ) {
+        fileTransferClients[peripheral.address]?.let { fileTransferClient ->
+            userSelectedTransferClient = fileTransferClient
             updateSelectedPeripheral()
+            completion?.let { it(Result.success(fileTransferClient)) }
         } ?: run {
             connect(peripheral) { result ->
                 // Select the newly connected peripheral
                 userSelectedTransferClient = result.getOrNull()
                 updateSelectedPeripheral()
+                completion?.let { it(result) }
             }
         }
     }
@@ -300,6 +298,10 @@ class ConnectionManager(
         log.info("selectedPeripheral: ${currentFileTransferClient.value?.peripheral?.nameOrAddress}")
     }
 
+    fun getPeripheral(address: String): Peripheral? {
+        return peripherals.value.firstOrNull { it.address == address }
+    }
+
     // region Managed Peripherals
     @SuppressLint("InlinedApi")
     @RequiresPermission(allOf = [BLUETOOTH_SCAN, BLUETOOTH_CONNECT])
@@ -436,17 +438,27 @@ class ConnectionManager(
         managedBlePeripherals.map { removePeripheralFromAutomaticallyManagedConnection(it.fileTransferPeripheral) }
     }
 
-    private fun removePeripheralFromAutomaticallyManagedConnection(bleFileTransferPeripheral: BleFileTransferPeripheral, cause: CancellationException? = null) {
+    private fun removePeripheralFromAutomaticallyManagedConnection(
+        bleFileTransferPeripheral: BleFileTransferPeripheral,
+        cause: CancellationException? = null
+    ) {
         removePeripheralFromAutomaticallyManagedConnection(bleFileTransferPeripheral.address, cause)
     }
 
-    private fun removePeripheralFromAutomaticallyManagedConnection(address: String, cause: CancellationException? = null) {
-        managedBlePeripherals.forEach { if (it.fileTransferPeripheral.address == address) {
-            it.job.cancel(cause)
-        } }
+    private fun removePeripheralFromAutomaticallyManagedConnection(
+        address: String,
+        cause: CancellationException? = null
+    ) {
+        managedBlePeripherals.forEach {
+            if (it.fileTransferPeripheral.address == address) {
+                it.job.cancel(cause)
+            }
+        }
         managedBlePeripherals.removeAll { it.fileTransferPeripheral.address == address }
     }
 
     // endregion
+
+
 }
 
