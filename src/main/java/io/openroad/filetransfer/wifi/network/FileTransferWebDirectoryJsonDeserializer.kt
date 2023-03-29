@@ -28,7 +28,7 @@ class FileTransferWebDirectoryJsonDeserializer : JsonDeserializer<List<Directory
                 type = if (isDirectory) DirectoryEntry.EntryType.Directory else DirectoryEntry.EntryType.File(
                     fileSize
                 ),
-                modificationDate = Date(Timestamp(timestamp).time)
+                modificationDate = Date(timestamp/1000000)
             )
 
             entries.add(entry)
