@@ -576,18 +576,14 @@ class BleFileTransferPeripheral(
 
     // Returns number of bytes processed (they will need to be discarded from the queue)
     private fun decodeResponseChunk(data: ByteArray): Int {
-        var bytesProcessed = 0
-
         if (data.isEmpty()) {
             log.info("Error: response invalid data")
-            return bytesProcessed
+            return 0
         }
-
-        val command = data[0]
 
         //log.info("received command: ${command.toHexString()}")
 
-        bytesProcessed = when (command) {
+        val bytesProcessed = when (val command = data[0]) {
             0x11.toByte() -> decodeReadFile(data)
             0x21.toByte() -> decodeWriteFile(data)
             0x31.toByte() -> decodeDeleteFile(data)
@@ -797,7 +793,7 @@ class BleFileTransferPeripheral(
             var packetSize = headerSize
 
             val directoryExists = data[1] == 0x01.toByte()
-            if (directoryExists && data.size >= headerSize) {
+            if (directoryExists) {
                 val entryCount = data.readInt32(8)
                 if (entryCount == 0) {
                     this.listDirectoryStatus = null

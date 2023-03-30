@@ -117,6 +117,21 @@ class ConnectionManager(
         peripheral: Peripheral,
         completion: ((Result<FileTransferClient>) -> Unit)? = null
     ) {
+        val fileTransferClient = fileTransferClients[peripheral.address]
+        if (fileTransferClient != null) {
+            userSelectedTransferClient = fileTransferClient
+            updateSelectedPeripheral()
+            completion?.let { it(Result.success(fileTransferClient)) }
+        }
+        else {
+            connect(peripheral) { result ->
+                // Select the newly connected peripheral
+                userSelectedTransferClient = result.getOrNull()
+                updateSelectedPeripheral()
+                completion?.let { it(result) }
+            }
+        }
+        /* Warning: this code always executes the ?: run branch. Use the version above
         fileTransferClients[peripheral.address]?.let { fileTransferClient ->
             userSelectedTransferClient = fileTransferClient
             updateSelectedPeripheral()
@@ -128,7 +143,7 @@ class ConnectionManager(
                 updateSelectedPeripheral()
                 completion?.let { it(result) }
             }
-        }
+        }*/
     }
 
     @SuppressLint("InlinedApi")
@@ -163,7 +178,7 @@ class ConnectionManager(
                 if (readyFileTransferPeripherals.isNotEmpty()) {
                     val firstConnectedBleFileTransferPeripheral =
                         readyFileTransferPeripherals.first()
-                    log.info("Reconnected to ${firstConnectedBleFileTransferPeripheral.nameOrAddress}")
+                    log.info("Reconnected to bonded ${firstConnectedBleFileTransferPeripheral.nameOrAddress}")
 
                     readyFileTransferPeripherals.forEach { bleFileTransferPeripheral ->
                         fileTransferClients[bleFileTransferPeripheral.address] =

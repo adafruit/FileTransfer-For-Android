@@ -1035,7 +1035,7 @@ class BlePeripheral(
                 mtuSize = mtu
                 log.info("Mtu changed: $mtu")
             } else {
-                log.warning("Error changing mtu to: $mtu status: $status")
+                log.warning("Error changing mtu. $mtu status: $status. Mtu size: $mtu")
             }
 
             // Check that the MTU changed callback was called in response to a command
