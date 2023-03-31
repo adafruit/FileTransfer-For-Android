@@ -122,8 +122,7 @@ class ConnectionManager(
             userSelectedTransferClient = fileTransferClient
             updateSelectedPeripheral()
             completion?.let { it(Result.success(fileTransferClient)) }
-        }
-        else {
+        } else {
             connect(peripheral) { result ->
                 // Select the newly connected peripheral
                 userSelectedTransferClient = result.getOrNull()
@@ -313,8 +312,12 @@ class ConnectionManager(
         log.info("selectedPeripheral: ${currentFileTransferClient.value?.peripheral?.nameOrAddress}")
     }
 
-    fun getPeripheral(address: String): Peripheral? {
+    fun getDiscoveredPeripheral(address: String): Peripheral? {
         return peripherals.value.firstOrNull { it.address == address }
+    }
+
+    fun getFileTransferClient(address: String): FileTransferClient? {
+        return fileTransferClients[address]
     }
 
     // region Managed Peripherals
