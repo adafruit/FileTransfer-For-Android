@@ -91,7 +91,7 @@ class WifiFileTransferPeripheral(
         path: String,
         completion: ((Result<List<DirectoryEntry>?>) -> Unit)?
     ) {
-        log.info("List directory $path")
+        log.info("Wifi list directory $path")
 
         externalScope.launch {
             runCatching {

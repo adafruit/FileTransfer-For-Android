@@ -64,10 +64,10 @@ class BleAdvertisementScanner(
                     }*/
 
                     trySend(results)
-                            /*
-                        .onFailure {
-                            log.warning("scanResultFlow failure for batch result with ${results.size} items")
-                        }*/
+                    /*
+                .onFailure {
+                    log.warning("scanResultFlow failure for batch result with ${results.size} items")
+                }*/
                 }
 
                 override fun onScanResult(callbackType: Int, result: ScanResult?) {
@@ -96,12 +96,18 @@ class BleAdvertisementScanner(
                 .setMatchMode(matchMode)
                 .setReportDelay(kScanReportDelay) //if (isOffloadedScanBatchingSupported) kScanReportDelay else 0)
                 .build()
-            scanner.startScan(scanFilters, scanSettings, callback)
-            isScanning = true
 
-            awaitClose {
-                scanner.stopScan(callback)
+            try {
+                scanner.startScan(scanFilters, scanSettings, callback)
+                isScanning = true
+
+                awaitClose {
+                    scanner.stopScan(callback)
+                    isScanning = false
+                }
+            } catch (e: SecurityException) {
                 isScanning = false
+                log.warning("SecurityException: $e")
             }
         }
     }.flowOn(Dispatchers.Main.immediate)        // Call startScan on MainThread

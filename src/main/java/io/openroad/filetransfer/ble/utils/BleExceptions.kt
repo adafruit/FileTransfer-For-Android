@@ -4,7 +4,6 @@ package io.openroad.filetransfer.ble.utils
  * Created by Antonio García (antonio@openroad.es)
  */
 
-
 open class BleException internal constructor(
     message: String? = null,
     cause: Throwable? = null,
@@ -13,7 +12,6 @@ open class BleException internal constructor(
 data class BleScanException internal constructor(
     val errorCode: Int,
 ) : BleException("Scan Error: $errorCode")
-
 
 class BleInvalidStateException internal constructor(
     message: String? = null,
@@ -24,12 +22,10 @@ class BleOperationInProgressException internal constructor(
     message: String? = null,
 ) : BleException(message)
 
-
 class BleConnectionInvalidStateException internal constructor(
     message: String? = null,
     cause: Throwable? = null,
 ) : BleException(message, cause)
-
 
 class BleUnknownStateException internal constructor() : BleException()
 
