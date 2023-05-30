@@ -9,4 +9,5 @@ interface BondedBlePeripherals {
 
     fun add(name: String?, address: String)
     fun remove(address: String)
+    fun refresh()
 }

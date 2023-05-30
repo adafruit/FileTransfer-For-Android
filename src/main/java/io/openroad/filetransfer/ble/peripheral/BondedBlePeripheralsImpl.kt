@@ -80,7 +80,7 @@ class BondedBlePeripheralsImpl(
         }
     }
 
-    fun refresh() {
+    override fun refresh() {
         _peripheralsData.update { getPeripheralsData() }
     }
 

@@ -16,10 +16,11 @@ class BondedBlePeripheralsFake() : BondedBlePeripherals {
     }
 
     override fun add(name: String?, address: String) {
-
     }
 
     override fun remove(address: String) {
+    }
 
+    override fun refresh() {
     }
 }
