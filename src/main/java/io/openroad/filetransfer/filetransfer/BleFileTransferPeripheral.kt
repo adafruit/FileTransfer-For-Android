@@ -8,7 +8,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresPermission
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import io.openroad.filetransfer.BuildConfig
 import io.openroad.filetransfer.PeripheralConnectCompletionHandler
 import io.openroad.filetransfer.ble.bond.BleBondState

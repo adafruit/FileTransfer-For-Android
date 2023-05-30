@@ -16,7 +16,6 @@ import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
-import com.adafruit.glider.utils.LogUtils
 import io.openroad.filetransfer.ble.peripheral.BlePeripheral
 import io.openroad.filetransfer.ble.state.BleState
 import io.openroad.filetransfer.filetransfer.BleFileTransferPeripheral

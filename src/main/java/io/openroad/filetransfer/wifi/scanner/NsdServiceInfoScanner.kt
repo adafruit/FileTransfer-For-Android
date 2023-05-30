@@ -9,7 +9,7 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdManager.ResolveListener
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import io.openroad.filetransfer.ble.utils.LogHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel

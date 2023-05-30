@@ -1,6 +1,6 @@
 package io.openroad.filetransfer.filetransfer
 
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import io.openroad.filetransfer.Peripheral
 import io.openroad.filetransfer.ble.peripheral.BlePeripheral
 import io.openroad.filetransfer.ble.scanner.BlePeripheralScanner

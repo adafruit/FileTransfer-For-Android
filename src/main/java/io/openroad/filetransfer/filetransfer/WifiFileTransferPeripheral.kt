@@ -5,7 +5,7 @@ package io.openroad.filetransfer.filetransfer
  */
 
 import android.util.Base64
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import io.openroad.filetransfer.PeripheralConnectCompletionHandler
 import io.openroad.filetransfer.ble.utils.BleException
 import io.openroad.filetransfer.ble.utils.LogHandler
