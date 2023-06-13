@@ -18,7 +18,7 @@ import android.util.Log
 import androidx.annotation.IntRange
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresPermission
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import io.openroad.filetransfer.BuildConfig
 import io.openroad.filetransfer.Peripheral
 import io.openroad.filetransfer.PeripheralConnectCompletionHandler

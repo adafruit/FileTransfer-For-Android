@@ -2,7 +2,7 @@ package io.openroad.filetransfer.ble.peripheral
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import io.openroad.filetransfer.ble.utils.BleManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,6 +1,6 @@
 package io.openroad.filetransfer.filetransfer
 
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import java.io.ByteArrayOutputStream
 import java.lang.Integer.max
 import java.util.concurrent.Semaphore

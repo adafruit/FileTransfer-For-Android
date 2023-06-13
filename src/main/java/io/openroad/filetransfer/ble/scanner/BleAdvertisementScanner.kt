@@ -12,7 +12,7 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import androidx.annotation.RequiresPermission
-import com.adafruit.glider.utils.LogUtils
+import io.openroad.filetransfer.ble.utils.LogUtils
 import io.openroad.filetransfer.ble.utils.BleManager
 import io.openroad.filetransfer.ble.utils.BleScanException
 import kotlinx.coroutines.Dispatchers
